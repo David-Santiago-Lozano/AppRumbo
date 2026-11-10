@@ -1,0 +1,196 @@
+<main class="page-content client-page">
+  <div class="page-heading">
+    <div>
+      <span class="section-kicker">TU PRÓXIMO VIAJE</span>
+      <h1>La ciudad es tuya.</h1>
+      <p>Selecciona los puntos en el mapa para consultar la tarifa y pedir tu viaje.</p>
+    </div>
+    @if (fare) {
+      <div class="fare-chip">
+        <span>{{ fare.name }}</span>
+        <strong>Mínimo {{ fare.minimum_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
+      </div>
+    }
+  </div>
+
+  @if (pageError) { <p class="notice error" role="alert">{{ pageError }}</p> }
+  @if (fareError) { <p class="notice error" role="alert">No se pudo consultar la tarifa: {{ fareError }}</p> }
+  @if (notice) { <p class="notice success" role="status">{{ notice }}</p> }
+
+  <div class="client-grid">
+    <section class="panel map-panel">
+      <app-location-map
+        [origin]="origin"
+        [destination]="destination"
+        [driverLocation]="driverLocation"
+        [routeCoordinates]="routeCoordinates"
+        [target]="target"
+        (locationSelected)="selectLocation($event)"
+        (currentLocationFound)="useCurrentLocation($event)">
+      </app-location-map>
+    </section>
+
+    <section class="panel route-panel">
+      <h2>¿A dónde vamos?</h2>
+      <p class="panel-description">Busca una dirección o toca el mapa para elegir el punto. Puedes ajustar el resultado tocando el mapa.</p>
+      <div class="target-switch" role="group" aria-label="Punto que se va a seleccionar">
+        <button type="button" [class.active]="target === 'origin'" (click)="setTarget('origin')">1 · Origen</button>
+        <button type="button" [class.active]="target === 'destination'" (click)="setTarget('destination')">2 · Destino</button>
+      </div>
+      <div class="location-search">
+        <label class="field">
+          <span>PUNTO DE RECOGIDA</span>
+          <input [(ngModel)]="originName" (ngModelChange)="onPlaceNameChanged('origin')" (keyup.enter)="searchPlace('origin')" placeholder="Nombre o dirección del origen">
+          @if (origin) {
+            <small>{{ origin.latitude | number:'1.5-5' }}, {{ origin.longitude | number:'1.5-5' }}</small>
+          } @else {
+            <small class="field-hint">Busca el lugar o selecciónalo en el mapa</small>
+          }
+        </label>
+        <button class="place-search-button" type="button" (click)="searchPlace('origin')" [disabled]="searchingPlaces || !originName.trim()">
+          {{ searchingPlaces && placeSearchTarget === 'origin' ? 'Buscando…' : 'Ubicar origen' }}
+        </button>
+      </div>
+      <div class="location-search">
+        <label class="field">
+          <span>DESTINO</span>
+          <input [(ngModel)]="destinationName" (ngModelChange)="onPlaceNameChanged('destination')" (keyup.enter)="searchPlace('destination')" placeholder="Nombre o dirección del destino">
+          @if (destination) {
+            <small>{{ destination.latitude | number:'1.5-5' }}, {{ destination.longitude | number:'1.5-5' }}</small>
+          } @else {
+            <small class="field-hint">Busca el lugar o selecciónalo en el mapa</small>
+          }
+        </label>
+        <button class="place-search-button" type="button" (click)="searchPlace('destination')" [disabled]="searchingPlaces || !destinationName.trim()">
+          {{ searchingPlaces && placeSearchTarget === 'destination' ? 'Buscando…' : 'Ubicar destino' }}
+        </button>
+      </div>
+      @if (placeResults.length && placeSearchTarget) {
+        <div class="place-results" role="list" aria-label="Resultados de búsqueda">
+          @for (place of placeResults; track $index) {
+            <button type="button" role="listitem" (click)="selectPlace(place)">{{ place.displayName }}</button>
+          }
+        </div>
+      }
+      <p class="small-note">La búsqueda envía el texto a OpenStreetMap al pulsar Ubicar. Selecciona el resultado correcto si hay lugares con nombres similares.</p>
+      <button class="secondary-button" type="button" (click)="estimateRoute()" [disabled]="!origin || !destination || estimateBusy">
+        {{ estimateBusy ? 'Calculando…' : 'Calcular tarifa estimada' }}
+      </button>
+
+      @if (routeBusy) {
+        <p class="route-status" role="status">Calculando la ruta por carretera…</p>
+      } @else if (roadRoute) {
+        <p class="route-status" role="status">Ruta por carretera: {{ roadRoute.distanceKm | number:'1.1-1' }} km · aprox. {{ roadRoute.durationMinutes | number:'1.0-0' }} min (estimación).</p>
+      }
+
+      @if (estimate) {
+        <div class="estimate-card">
+          <div class="estimate-main">
+            <span>Estimado por el servidor</span>
+            <strong>{{ estimate.estimated_fare | currency:estimate.currency:'symbol-narrow':'1.0-0':'es-CO' }}</strong>
+          </div>
+          <div class="estimate-details">
+            <span>{{ estimate.distance_km }} km</span>
+            <span>{{ estimate.duration_min }} min</span>
+          </div>
+        </div>
+      }
+
+      <button class="primary-button" type="button" (click)="requestRide()" [disabled]="busy || !origin || !destination">
+        {{ busy ? 'Enviando solicitud…' : 'Pedir viaje' }}
+        <span aria-hidden="true">→</span>
+      </button>
+      <p class="small-note">La API no solicita tipo de vehículo. El precio y la solicitud vienen del servidor.</p>
+    </section>
+  </div>
+
+  <section class="panel active-panel">
+    <div class="panel-title-row">
+      <div>
+        <span class="section-kicker">EN CURSO</span>
+        <h2>Tu viaje activo</h2>
+      </div>
+      <button class="text-button" type="button" (click)="refreshActive()">Actualizar estado</button>
+    </div>
+    @if (activeRide; as ride) {
+      <div class="active-ride">
+        <div>
+          <span class="status-pill">{{ ride.status }}</span>
+          <h3>{{ ride.origin_name || 'Origen registrado' }} → {{ ride.destination_name || 'Destino registrado' }}</h3>
+          <p>Solicitud #{{ ride.id }} · {{ ride.estimated_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</p>
+        </div>
+        @if (ride.driver) {
+          <div class="driver-info">
+            <strong>{{ ride.driver.user.name }}</strong>
+            <span>{{ ride.driver.user.phone }} · ★ {{ ride.driver.rating_average }}</span>
+            @if (ride.vehicle) { <span>{{ ride.vehicle.brand }} {{ ride.vehicle.model }} · {{ ride.vehicle.plate }}</span> }
+          </div>
+        }
+        <button class="danger-button" type="button" (click)="cancelRide()" [disabled]="busy">Cancelar</button>
+      </div>
+      @if (lastLiveUpdateAt) {
+        <p class="live-update" role="status">Estado actualizado {{ lastLiveUpdateAt | date:'HH:mm:ss' }} · consulta cada 3 s mientras el viaje está activo</p>
+      }
+      @if (driverLocation) {
+        <p class="small-note">La ubicación del vehículo puede ser simulada durante la demostración del proyecto.</p>
+      }
+    } @else {
+      <p class="empty-state">No tienes solicitudes ni viajes activos.</p>
+    }
+  </section>
+
+  <section class="panel history-panel">
+    <div class="panel-title-row">
+      <div>
+        <span class="section-kicker">ACTIVIDAD</span>
+        <h2>Historial de viajes</h2>
+      </div>
+      <button class="text-button" type="button" (click)="loadTrips()">Actualizar historial</button>
+    </div>
+    @if (trips.length) {
+      <div class="trip-list">
+        @for (trip of trips; track trip.id) {
+          <article class="trip-row">
+            <div class="trip-route">
+              <strong>{{ trip.origin_name || 'Viaje' }} @if (trip.destination_name) { → {{ trip.destination_name }} }</strong>
+              <span>{{ trip.completed_at ? (trip.completed_at | date:'medium':'':'es-CO') : 'Fecha no disponible' }} · {{ trip.status }}</span>
+            </div>
+            <strong>{{ (trip.final_fare ?? trip.estimated_fare ?? 0) | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
+            @if (trip.status === 'completed') {
+              <button class="text-button" type="button" (click)="selectedRatingTrip = trip.id">Calificar</button>
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-state">Aún no aparecen viajes en tu historial.</p>
+    }
+    @if (selectedRatingTrip !== null) {
+      <div class="rating-form">
+        <h3>Calificar viaje #{{ selectedRatingTrip }}</h3>
+        <label class="field">
+          <span>CALIFICACIÓN (1 A 5)</span>
+          <select [(ngModel)]="ratingScore" name="ratingScore">
+            <option [ngValue]="5">5 · Excelente</option>
+            <option [ngValue]="4">4 · Muy bueno</option>
+            <option [ngValue]="3">3 · Bueno</option>
+            <option [ngValue]="2">2 · Regular</option>
+            <option [ngValue]="1">1 · Malo</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>COMENTARIO</span>
+          <textarea [(ngModel)]="ratingComment" name="ratingComment" rows="3" maxlength="1000"></textarea>
+        </label>
+        <label class="checkbox-field">
+          <input [(ngModel)]="hasIncident" name="hasIncident" type="checkbox">
+          Reportar una incidencia
+        </label>
+        <div class="form-actions">
+          <button class="primary-button" type="button" (click)="rateTrip()" [disabled]="busy">Enviar calificación</button>
+          <button class="text-button" type="button" (click)="selectedRatingTrip = null">Cancelar</button>
+        </div>
+      </div>
+    }
+  </section>
+</main>

@@ -1,0 +1,47 @@
+.page-content { width: min(100% - 40px, 1260px); margin: 0 auto; padding: 34px 0 58px; }
+.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.page-heading h1 { margin: 6px 0; color: #23382e; font-family: Manrope, 'DM Sans', sans-serif; font-size: clamp(26px, 4vw, 36px); letter-spacing: -.055em; }
+.page-heading p { max-width: 650px; margin: 0; color: #78847c; font-size: 12px; line-height: 1.5; }
+.section-kicker { color: #89958b; font-size: 9px; font-weight: 750; letter-spacing: .16em; }
+.availability-button { min-width: 150px; min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 0; border-radius: 9px; background: #263d32; color: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.availability-button.online { background: #fff; border: 1px solid #dfe6dc; color: #52635a; }
+.availability-button:disabled { opacity: .6; cursor: wait; }
+.availability-dot { width: 7px; height: 7px; border-radius: 50%; background: #a7e173; }
+.availability-button.online .availability-dot { background: #e98168; }
+.approval-note, .tracking-note { margin: 12px 0; color: #879188; font-size: 10px; line-height: 1.5; }
+.polling-note { margin: 12px 0 0; color: #78877c; font-size: 10px; }
+.driver-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(330px, .8fr); gap: 18px; }
+.panel { min-width: 0; padding: 19px; border: 1px solid #e5e9e1; border-radius: 15px; background: #fff; box-shadow: 0 7px 22px rgb(46 64 48 / 4%); }
+.map-panel { min-height: 560px; padding: 10px; }
+.panel-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+.panel h2 { margin: 4px 0 0; color: #2b3e33; font-size: 18px; }
+.live-pill, .status-pill { display: inline-flex; align-items: center; padding: 5px 8px; border-radius: 20px; background: #edf5e6; color: #52703f; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.request-list { display: grid; gap: 11px; max-height: 660px; overflow: auto; }
+.request-card, .active-trip { padding: 14px; border: 1px solid #e7ece3; border-radius: 11px; background: #fafbf9; }
+.request-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #33493a; font-size: 14px; }
+.request-card p, .active-trip p { margin: 10px 0 0; color: #59695f; font-size: 11px; line-height: 1.45; }
+.request-meta { color: #839087 !important; }
+.active-trip h3 { margin: 12px 0 0; color: #34493b; font-size: 14px; line-height: 1.4; }
+.primary-button { width: 100%; min-height: 40px; margin-top: 13px; padding: 0 13px; border: 0; border-radius: 8px; background: #263d32; color: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.primary-button:disabled { opacity: .5; cursor: not-allowed; }
+.completion-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.completion-fields label { display: grid; gap: 6px; color: #718078; font-size: 10px; }
+.completion-fields input { min-width: 0; height: 38px; padding: 0 9px; border: 1px solid #dfe6dc; border-radius: 7px; font: inherit; }
+.demo-controls { display: grid; gap: 8px; margin-top: 14px; padding: 12px; border: 1px dashed #d88a55; border-radius: 9px; background: #fffaf3; }
+.demo-controls p { margin: 0; color: #806349; font-size: 10px; line-height: 1.5; }
+.demo-controls .secondary-button { width: 100%; }
+.demo-controls .text-button { min-height: 32px; }
+.demo-controls progress { width: 100%; height: 8px; accent-color: #e58b50; }
+.demo-warning { padding: 9px 10px; border-radius: 7px; background: #fff0e3; color: #944b24 !important; font-weight: 750; }
+.empty-state { margin: 14px 0; color: #879188; font-size: 12px; line-height: 1.5; }
+.notice { margin: 0 0 12px; padding: 11px 13px; border-radius: 8px; font-size: 12px; line-height: 1.45; }
+.notice.error { background: #fff2ef; color: #9c3a30; }
+.notice.success { background: #edf6e6; color: #4b6c3e; }
+@media (max-width: 900px) { .driver-grid { grid-template-columns: 1fr; } .map-panel { min-height: 410px; } }
+@media (max-width: 560px) {
+  .page-content { width: min(100% - 24px, 1260px); padding: 23px 0 40px; }
+  .page-heading { align-items: start; flex-direction: column; }
+  .panel { padding: 14px; border-radius: 12px; }
+  .map-panel { min-height: 360px; padding: 7px; }
+  .completion-fields { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,30 @@
+:host { display: block; min-height: 100vh; color: #27382f; }
+ion-app { display: block; min-height: 100vh; background: #f5f7f2; }
+.topbar { position: relative; z-index: 5; min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 clamp(16px, 5vw, 72px); border-bottom: 1px solid #e5e9e1; background: #fff; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #24372f; text-decoration: none; }
+.brand-mark { width: 29px; height: 29px; display: flex; align-items: center; justify-content: center; gap: 2px; border-radius: 9px; background: #c8f17d; transform: rotate(-8deg); }
+.brand-mark span { width: 3px; border-radius: 4px; background: #2e4639; transform: skew(-18deg); }
+.brand-mark span:nth-child(1) { height: 10px; }
+.brand-mark span:nth-child(2) { height: 16px; }
+.brand-mark span:nth-child(3) { height: 12px; }
+.brand-name { font-size: 23px; font-weight: 750; letter-spacing: -1.5px; }
+.brand-period { color: #f47e55; }
+.role-nav { display: flex; gap: 18px; }
+.role-nav a { color: #52635a; font-size: 12px; font-weight: 650; text-decoration: none; }
+.role-nav a.active { color: #263d32; }
+.account-actions { display: flex; align-items: center; gap: 10px; }
+.account-name { max-width: 190px; overflow: hidden; color: #45554b; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.role-badge { padding: 5px 8px; border-radius: 20px; background: #edf4e6; color: #587643; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.logout-button { min-height: 34px; padding: 0 11px; border: 1px solid #e0e6dd; border-radius: 8px; background: #fff; color: #52635a; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; }
+.logout-button:hover { border-color: #b6cba3; background: #fafcf8; }
+.global-error { margin: 8px auto; max-width: 1000px; padding: 10px 14px; border-radius: 8px; background: #fff1ee; color: #a33b32; font-size: 12px; }
+@media (max-width: 600px) {
+  .topbar { min-height: 62px; gap: 8px; padding: 0 12px; }
+  .brand { gap: 7px; }
+  .brand-name { font-size: 21px; }
+  .role-nav { display: none; }
+  .account-actions { gap: 6px; }
+  .account-name { max-width: 90px; font-size: 10px; }
+  .role-badge { padding: 4px 6px; font-size: 8px; }
+  .logout-button { min-height: 31px; padding: 0 8px; font-size: 10px; }
+}

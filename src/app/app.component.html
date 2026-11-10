@@ -1,0 +1,28 @@
+<ion-app>
+  @if (user$ | async; as user) {
+    <header class="topbar">
+      <a class="brand" [routerLink]="['/', user.role]" aria-label="Rumbo, inicio">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span class="brand-name">rumbo<span class="brand-period">.</span></span>
+      </a>
+      <nav class="role-nav" aria-label="Navegación principal">
+        @if (user.role === 'client') {
+          <a routerLink="/client">Mis viajes</a>
+        } @else if (user.role === 'driver') {
+          <a routerLink="/driver">Conductor</a>
+        } @else {
+          <a routerLink="/admin">Administración</a>
+        }
+      </nav>
+      <div class="account-actions">
+        <span class="account-name">{{ user.name }}</span>
+        <span class="role-badge">{{ user.role }}</span>
+        <button type="button" class="logout-button" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </header>
+  }
+  @if (logoutError) {
+    <p class="global-error" role="alert">{{ logoutError }}</p>
+  }
+  <router-outlet></router-outlet>
+</ion-app>

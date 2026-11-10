@@ -1,0 +1,127 @@
+<main class="auth-layout">
+  <section class="auth-brand" aria-label="Rumbo movilidad">
+    <a class="brand" routerLink="/login" aria-label="Rumbo, inicio">
+      <span class="brand-mark"><span></span><span></span><span></span></span>
+      <span class="brand-name">rumbo<span class="brand-period">.</span></span>
+    </a>
+    <div class="brand-message">
+      <span class="eyebrow">MOVILIDAD URBANA</span>
+      <h1>Tu ciudad,<br><em>a tu ritmo.</em></h1>
+      <p>Un viaje más simple empieza con un rumbo.</p>
+    </div>
+    <span class="brand-footnote">BOGOTÁ · COLOMBIA</span>
+  </section>
+
+  <section class="auth-form-panel">
+    <div class="auth-form">
+      @if (mode === 'login') {
+        <span class="section-kicker">QUÉ BUENO VERTE</span>
+        <h2>Inicia sesión</h2>
+        <p class="form-intro">Ingresa con tu correo o número de teléfono.</p>
+
+        <form (ngSubmit)="submit()">
+          <label>
+            <span>Correo o teléfono</span>
+            <input [(ngModel)]="login" name="login" autocomplete="username" required>
+          </label>
+          <label>
+            <span>Contraseña</span>
+            <span class="password-field">
+              <input [(ngModel)]="password" name="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password" required>
+              <button type="button" class="password-toggle" (click)="showPassword = !showPassword" aria-label="Mostrar u ocultar contraseña">
+                <ion-icon name="eye-outline"></ion-icon>
+              </button>
+            </span>
+          </label>
+          @if (errorMessage) {
+            <p class="form-error" role="alert">{{ errorMessage }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="busy || !login.trim() || !password">
+            {{ busy ? 'Conectando…' : 'Entrar' }}
+            <ion-icon name="arrow-forward" aria-hidden="true"></ion-icon>
+          </button>
+        </form>
+
+        <p class="auth-switch">¿Aún no tienes cuenta? <a routerLink="/register">Crear cuenta</a></p>
+      } @else {
+        <span class="section-kicker">EMPIEZA AQUÍ</span>
+        <h2>Crea tu cuenta</h2>
+        <p class="form-intro">Regístrate como cliente o como conductor.</p>
+
+        <div class="role-picker" role="group" aria-label="Tipo de cuenta">
+          <button type="button" [class.active]="role === 'client'" (click)="role = 'client'">Cliente</button>
+          <button type="button" [class.active]="role === 'driver'" (click)="role = 'driver'">Conductor</button>
+        </div>
+
+        <form (ngSubmit)="submit()">
+          <div class="form-grid">
+            <label class="wide-field">
+              <span>Nombre completo</span>
+              <input [(ngModel)]="name" name="name" autocomplete="name" required>
+            </label>
+            <label>
+              <span>Correo electrónico</span>
+              <input [(ngModel)]="email" name="email" type="email" autocomplete="email" required>
+            </label>
+            <label>
+              <span>Teléfono</span>
+              <input [(ngModel)]="phone" name="phone" type="tel" autocomplete="tel" required>
+            </label>
+            <label class="wide-field">
+              <span>Contraseña</span>
+              <input [(ngModel)]="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+            </label>
+          </div>
+
+          @if (role === 'driver') {
+            <div class="driver-fields">
+              <h3>Datos de conductor y vehículo</h3>
+              <div class="form-grid">
+                <label>
+                  <span>Número de licencia</span>
+                  <input [(ngModel)]="licenseNumber" name="licenseNumber" required>
+                </label>
+                <label>
+                  <span>Placa</span>
+                  <input [(ngModel)]="plate" name="plate" required>
+                </label>
+                <label>
+                  <span>Marca</span>
+                  <input [(ngModel)]="brand" name="brand" required>
+                </label>
+                <label>
+                  <span>Modelo</span>
+                  <input [(ngModel)]="model" name="model" required>
+                </label>
+                <label>
+                  <span>Año</span>
+                  <input [(ngModel)]="year" name="year" type="number" min="1990" [max]="currentYear + 1" required>
+                </label>
+                <label>
+                  <span>Capacidad</span>
+                  <input [(ngModel)]="capacity" name="capacity" type="number" min="1" max="12" required>
+                </label>
+                <label class="wide-field">
+                  <span>Color</span>
+                  <input [(ngModel)]="color" name="color" required>
+                </label>
+              </div>
+              <p class="form-hint">Tu cuenta necesitará aprobación administrativa para conectarte como conductor.</p>
+            </div>
+          }
+
+          @if (errorMessage) {
+            <p class="form-error" role="alert">{{ errorMessage }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="busy || !name.trim() || !email.trim() || !phone.trim() || password.length < 8">
+            {{ busy ? 'Creando cuenta…' : 'Crear cuenta' }}
+            <ion-icon name="arrow-forward" aria-hidden="true"></ion-icon>
+          </button>
+        </form>
+
+        <p class="auth-switch">¿Ya tienes una cuenta? <a routerLink="/login">Iniciar sesión</a></p>
+      }
+      <p class="auth-note">La cuenta de administrador es creada por el sistema; no hay registro público de administradores.</p>
+    </div>
+  </section>
+</main>

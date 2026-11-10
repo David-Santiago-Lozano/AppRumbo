@@ -1,0 +1,166 @@
+<main class="page-content admin-page">
+  <div class="page-heading">
+    <div>
+      <span class="section-kicker">CENTRO DE CONTROL</span>
+      <h1>Administración</h1>
+      <p>Gestiona la plataforma con datos en vivo del backend.</p>
+    </div>
+    <span class="admin-label">ADMINISTRADOR</span>
+  </div>
+
+  @if (pageError) { <p class="notice error" role="alert">{{ pageError }}</p> }
+  @if (notice) { <p class="notice success" role="status">{{ notice }}</p> }
+
+  <nav class="admin-tabs" aria-label="Secciones de administración">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" [class.active]="activeTab === tab.id" (click)="selectTab(tab.id)">{{ tab.label }}</button>
+    }
+  </nav>
+
+  @if (activeTab === 'dashboard') {
+    <section class="admin-section">
+      <div class="section-title"><h2>Indicadores</h2><button class="text-button" type="button" (click)="selectTab('dashboard')">Actualizar</button></div>
+      @if (stats; as data) {
+        <div class="stats-grid">
+          <article class="stat-card"><span>Clientes</span><strong>{{ data.total_clients }}</strong></article>
+          <article class="stat-card"><span>Conductores</span><strong>{{ data.total_drivers }}</strong></article>
+          <article class="stat-card"><span>Conductores pendientes</span><strong>{{ data.pending_drivers }}</strong></article>
+          <article class="stat-card"><span>Conductores aprobados</span><strong>{{ data.approved_drivers }}</strong></article>
+          <article class="stat-card"><span>Viajes activos</span><strong>{{ data.active_trips }}</strong></article>
+          <article class="stat-card"><span>Solicitudes pendientes</span><strong>{{ data.pending_requests }}</strong></article>
+          <article class="stat-card"><span>Viajes completados</span><strong>{{ data.completed_trips }}</strong></article>
+          <article class="stat-card"><span>Viajes cancelados</span><strong>{{ data.cancelled_trips }}</strong></article>
+          <article class="stat-card revenue"><span>Ingresos totales</span><strong>{{ data.total_revenue | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong></article>
+        </div>
+      } @else {
+        <p class="empty-state">Consultando indicadores…</p>
+      }
+      <div class="admin-section recent-section">
+        <h2>Viajes recientes</h2>
+        @if (recentTrips.length) {
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Origen</th><th>Destino</th><th>Estado</th><th>Valor</th></tr></thead>
+              <tbody>
+                @for (trip of recentTrips; track trip.id) {
+                  <tr><td>#{{ trip.id }}</td><td>{{ trip.origin_name || '—' }}</td><td>{{ trip.destination_name || '—' }}</td><td>{{ trip.status }}</td><td>{{ (trip.final_fare ?? trip.estimated_fare ?? 0) | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty-state">No hay viajes recientes en la respuesta del servidor.</p>
+        }
+        <h2 class="incidents-heading">Incidencias recientes</h2>
+        @if (recentIncidents.length) {
+          <pre class="json-data">{{ recentIncidents | json }}</pre>
+        } @else {
+          <p class="empty-state">No hay incidencias recientes.</p>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab === 'drivers') {
+    <section class="admin-section">
+      <div class="section-title">
+        <div><h2>Conductores</h2><p>Verifica la información y actualiza el estado de aprobación. Las solicitudes pendientes se actualizan automáticamente.</p></div>
+        <select [(ngModel)]="approvalFilter" name="approvalFilter" (ngModelChange)="loadDrivers()">
+          <option value="">Todos los estados</option><option value="pending">Pendientes</option><option value="approved">Aprobados</option><option value="rejected">Rechazados</option><option value="suspended">Suspendidos</option>
+        </select>
+      </div>
+      <label class="field">Nota administrativa<input [(ngModel)]="adminNotes" name="adminNotes" placeholder="Opcional: resultado de verificación documental"></label>
+      @if (drivers.length) {
+        <div class="driver-list">
+          @for (driver of drivers; track driver.id) {
+            <article class="driver-card">
+              <div class="driver-card-heading">
+                <div><span class="section-kicker">CONDUCTOR #{{ driver.id }}</span><h3>{{ driver.user.name }}</h3><span>{{ driver.user.email }}</span></div>
+                <span class="status-badge">{{ driver.approval_status }}</span>
+              </div>
+              <div class="driver-details"><span>Licencia: {{ driver.license_number }}</span><span>Calificación: ★ {{ driver.rating_average }}</span></div>
+              @for (vehicle of driver.vehicles; track vehicle.plate) {
+                <p class="vehicle-line">{{ vehicle.brand }} {{ vehicle.model }} · {{ vehicle.year }} · {{ vehicle.plate }}</p>
+              }
+              <div class="action-row">
+                <button class="approve-button" type="button" (click)="updateApproval(driver, 'approved')" [disabled]="busy">Aprobar</button>
+                <button class="text-button" type="button" (click)="updateApproval(driver, 'rejected')" [disabled]="busy">Rechazar</button>
+                <button class="danger-button" type="button" (click)="updateApproval(driver, 'suspended')" [disabled]="busy">Suspender</button>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-state">No hay conductores para este filtro.</p>
+      }
+    </section>
+  }
+
+  @if (activeTab === 'fares') {
+    <section class="admin-section fare-admin-grid">
+      <div>
+        <h2>Tarifas configuradas</h2>
+        @if (fares.length) {
+          <div class="fare-list">
+            @for (fare of fares; track fare.id) {
+              <article class="fare-card">
+                <div><h3>{{ fare.name }}</h3><span [class.active-fare]="fare.active">{{ fare.active ? 'Activa' : 'Inactiva' }}</span></div>
+                <p>Base {{ fare.base_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }} · km {{ fare.price_per_km | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }} · min {{ fare.price_per_minute | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</p>
+                <p>Mínimo {{ fare.minimum_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }} · multiplicador {{ fare.surge_multiplier }}</p>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="empty-state">No se recibieron tarifas configuradas.</p>
+        }
+      </div>
+      <form class="fare-form" (ngSubmit)="createFare()">
+        <h2>Crear tarifa</h2>
+        <label class="field">Nombre<input [(ngModel)]="fareForm.name" name="fareName" required></label>
+        <div class="fare-input-grid">
+          <label class="field">Tarifa base<input [(ngModel)]="fareForm.base_fare" name="baseFare" type="number" min="0" required></label>
+          <label class="field">Precio por km<input [(ngModel)]="fareForm.price_per_km" name="priceKm" type="number" min="0" required></label>
+          <label class="field">Precio por minuto<input [(ngModel)]="fareForm.price_per_minute" name="priceMinute" type="number" min="0" required></label>
+          <label class="field">Tarifa mínima<input [(ngModel)]="fareForm.minimum_fare" name="minimumFare" type="number" min="0" required></label>
+          <label class="field">Multiplicador<input [(ngModel)]="fareForm.surge_multiplier" name="surge" type="number" min="0.1" step="0.1" required></label>
+        </div>
+        <label class="checkbox-field"><input [(ngModel)]="fareForm.active" name="fareActive" type="checkbox"> Activar esta tarifa</label>
+        <button class="primary-button" type="submit" [disabled]="busy || !fareForm.name.trim()">Crear tarifa</button>
+      </form>
+    </section>
+  }
+
+  @if (activeTab === 'trips') {
+    <section class="admin-section">
+      <div class="section-title"><div><h2>Todos los viajes</h2><p>Filtra por estado, conductor, cliente o fecha.</p></div></div>
+      <div class="filters">
+        <label class="field">Estado<input [(ngModel)]="tripFilters['status']" name="tripStatus"></label>
+        <label class="field">ID conductor<input [(ngModel)]="tripFilters['driver_id']" name="driverFilter"></label>
+        <label class="field">ID cliente<input [(ngModel)]="tripFilters['client_id']" name="clientFilter"></label>
+        <label class="field">Fecha<input [(ngModel)]="tripFilters['date']" name="tripDate" type="date"></label>
+        <button class="primary-button" type="button" (click)="loadTrips()">Buscar</button>
+      </div>
+      @if (trips.length) {
+        <div class="table-wrap">
+          <table><thead><tr><th>ID</th><th>Origen</th><th>Destino</th><th>Estado</th><th>Valor</th></tr></thead>
+            <tbody>@for (trip of trips; track trip.id) { <tr><td>#{{ trip.id }}</td><td>{{ trip.origin_name || '—' }}</td><td>{{ trip.destination_name || '—' }}</td><td>{{ trip.status }}</td><td>{{ (trip.final_fare ?? trip.estimated_fare ?? 0) | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</td></tr> }</tbody>
+          </table>
+        </div>
+      } @else { <p class="empty-state">No hay viajes para los filtros seleccionados.</p> }
+    </section>
+  }
+
+  @if (activeTab === 'reports') {
+    <section class="admin-section">
+      <div class="section-title"><div><h2>Reportes</h2><p>Cancelaciones, ingresos y desempeño de conductores.</p></div><button class="text-button" type="button" (click)="selectTab('reports')">Actualizar</button></div>
+      @if (reportData !== null) { <pre class="json-data">{{ reportData | json }}</pre> } @else { <p class="empty-state">Consultando reporte…</p> }
+    </section>
+  }
+
+  @if (activeTab === 'audit') {
+    <section class="admin-section">
+      <div class="section-title"><div><h2>Registro de auditoría</h2><p>Acciones administrativas y eventos de seguridad.</p></div><button class="text-button" type="button" (click)="selectTab('audit')">Actualizar</button></div>
+      @if (auditData !== null) { <pre class="json-data">{{ auditData | json }}</pre> } @else { <p class="empty-state">Consultando registros…</p> }
+    </section>
+  }
+</main>

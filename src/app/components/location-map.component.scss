@@ -1,0 +1,22 @@
+:host { position: relative; display: block; min-height: 360px; height: 100%; overflow: hidden; border: 1px solid #dfe6dc; border-radius: 16px; background: #e7eee4; }
+.location-map { position: absolute; inset: 0; z-index: 0; }
+.map-actions { position: absolute; z-index: 500; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 7px; pointer-events: none; }
+.map-target, .map-action, .map-message { border: 1px solid rgb(224 231 220 / 90%); border-radius: 8px; background: rgb(255 255 255 / 94%); box-shadow: 0 2px 9px rgb(31 47 35 / 12%); }
+.map-target { margin-right: auto; padding: 9px 11px; color: #495c4e; font-size: 11px; font-weight: 650; }
+.map-action { min-height: 34px; padding: 0 10px; color: #354c3c; font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; pointer-events: auto; }
+.map-action:disabled { opacity: .6; cursor: wait; }
+.map-action.enabled { border-color: #9ab77a; background: #eef6e6; }
+.map-message { flex-basis: 100%; margin: 0; padding: 9px 11px; color: #4a594d; font-size: 11px; line-height: 1.4; }
+.map-credit { position: absolute; z-index: 500; right: 5px; bottom: 3px; padding: 2px 4px; background: rgb(255 255 255 / 82%); color: #536359; font-size: 9px; }
+:host ::ng-deep .rumbo-marker { border: 0; background: transparent; }
+:host ::ng-deep .rumbo-marker span { display: grid; width: 30px; height: 30px; place-items: center; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 7px rgb(0 0 0 / 28%); color: #fff; font-size: 11px; font-weight: 800; }
+:host ::ng-deep .rumbo-marker-origin span { background: #365f43; }
+:host ::ng-deep .rumbo-marker-destination span { background: #ed7854; }
+:host ::ng-deep .rumbo-marker-driver span { background: #4f74a4; }
+:host ::ng-deep .leaflet-control-rotate { border-radius: 8px !important; overflow: hidden; }
+@media (max-width: 560px) {
+  :host { min-height: 300px; border-radius: 12px; }
+  .map-actions { top: 8px; left: 8px; right: 8px; gap: 5px; }
+  .map-target { flex-basis: 100%; }
+  .map-action { min-height: 31px; font-size: 9px; }
+}

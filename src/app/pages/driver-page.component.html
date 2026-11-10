@@ -1,0 +1,131 @@
+<main class="page-content">
+  <div class="page-heading">
+    <div>
+      <span class="section-kicker">PANEL DE CONDUCTOR</span>
+      <h1>Tu jornada, a tu ritmo.</h1>
+      <p>Conéctate para recibir solicitudes cercanas y compartir tu ubicación con la plataforma.</p>
+    </div>
+    <button class="availability-button" [class.online]="available" type="button" (click)="setAvailability()" [disabled]="busy">
+      <span class="availability-dot"></span>
+      {{ busy ? 'Actualizando…' : (available ? 'Desconectarme' : 'Conectarme') }}
+    </button>
+  </div>
+
+  @if (pageError) { <p class="notice error" role="alert">{{ pageError }}</p> }
+  @if (notice) { <p class="notice success" role="status">{{ notice }}</p> }
+  <p class="approval-note">Si tu cuenta aún no ha sido aprobada, el servidor rechazará la conexión hasta que administración verifique tus documentos.</p>
+
+  <div class="driver-grid">
+    <section class="panel map-panel">
+      <app-location-map
+        [origin]="activeRequest ? { latitude: activeRequest.origin_latitude, longitude: activeRequest.origin_longitude } : null"
+        [destination]="activeRequest ? { latitude: activeRequest.destination_latitude, longitude: activeRequest.destination_longitude } : null"
+        [driverLocation]="mapDriverLocation"
+        [routeCoordinates]="demoRouteCoordinates"
+        [selectable]="false"
+        (currentLocationFound)="useCurrentLocation($event)"
+        (headingChanged)="recordHeading($event)">
+      </app-location-map>
+    </section>
+
+    <section class="panel requests-panel">
+      <div class="panel-title-row">
+        <div>
+          <span class="section-kicker">SERVICIOS</span>
+          <h2>{{ activeTrip ? 'Viaje en curso' : 'Solicitudes disponibles' }}</h2>
+        </div>
+        @if (available && !activeTrip) {
+          <span class="live-pill">En línea</span>
+        }
+      </div>
+
+      @if (activeTrip; as trip) {
+        <article class="active-trip">
+          <span class="status-pill">{{ trip.status }}</span>
+          @if (activeRequest; as request) {
+            <h3>{{ request.origin_name }} → {{ request.destination_name }}</h3>
+            <p>Cliente: {{ request.client.name }} · {{ request.client.phone }}</p>
+          }
+          <p>Tarifa estimada: {{ trip.estimated_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</p>
+          @if (demoMode) {
+            <p class="demo-warning" role="status">MODO DEMO: se están enviando ubicaciones simuladas al backend para que el cliente vea el recorrido. No representa GPS real.</p>
+          }
+          @if (trip.status === 'assigned') {
+            @if (!demoRunning) {
+              <button class="primary-button" type="button" (click)="arrive()" [disabled]="busy">Ya llegué al punto de recogida</button>
+            }
+            <div class="demo-controls">
+              <p>Simula el acercamiento al punto de recogida. La ruta estima el tiempo real, pero la animación se comprime a unos 30 segundos.</p>
+              @if (demoRoutePhase !== 'pickup') {
+                <button class="secondary-button" type="button" (click)="preparePickupSimulation()" [disabled]="preparingDemoRoute || demoRunning">
+                  {{ preparingDemoRoute ? 'Calculando ruta…' : 'Preparar simulación DEMO al punto de recogida' }}
+                </button>
+              } @else if (!demoMode) {
+                <button class="secondary-button" type="button" (click)="startDemoSimulation()" [disabled]="demoRunning">Iniciar simulación DEMO</button>
+              }
+              @if (demoRoutePhase === 'pickup' && demoRoute; as route) {
+                <p>Ruta: {{ route.distanceKm | number:'1.1-1' }} km · llegada estimada: {{ route.durationMinutes | number:'1.0-0' }} min.</p>
+              }
+              @if (demoRunning) {
+                <progress [value]="demoProgress" max="1" aria-label="Progreso de la simulación"></progress>
+                <button class="text-button" type="button" (click)="stopDemoSimulation()">Detener DEMO y volver al GPS real</button>
+              } @else if (demoMode) {
+                <button class="text-button" type="button" (click)="stopDemoSimulation()">Finalizar DEMO y volver al GPS real</button>
+              }
+            </div>
+          } @else if (trip.status === 'driver_arrived') {
+            <button class="primary-button" type="button" (click)="startTrip()" [disabled]="busy">Iniciar viaje</button>
+          } @else if (trip.status === 'in_progress') {
+            <div class="demo-controls">
+              <p>Simula el trayecto hacia el destino; la ETA es orientativa y la animación dura unos 30 segundos.</p>
+              @if (demoRoutePhase !== 'trip') {
+                <button class="secondary-button" type="button" (click)="prepareTripSimulation()" [disabled]="preparingDemoRoute || demoRunning">
+                  {{ preparingDemoRoute ? 'Calculando ruta…' : 'Preparar simulación DEMO al destino' }}
+                </button>
+              } @else if (!demoMode) {
+                <button class="secondary-button" type="button" (click)="startDemoSimulation()" [disabled]="demoRunning">Iniciar simulación DEMO</button>
+              }
+              @if (demoRoutePhase === 'trip' && demoRoute; as route) {
+                <p>Ruta: {{ route.distanceKm | number:'1.1-1' }} km · llegada estimada: {{ route.durationMinutes | number:'1.0-0' }} min.</p>
+              }
+              @if (demoRunning) {
+                <progress [value]="demoProgress" max="1" aria-label="Progreso de la simulación"></progress>
+                <button class="text-button" type="button" (click)="stopDemoSimulation()">Detener DEMO y volver al GPS real</button>
+              } @else if (demoMode) {
+                <button class="text-button" type="button" (click)="stopDemoSimulation()">Finalizar DEMO y volver al GPS real</button>
+              }
+            </div>
+            <div class="completion-fields">
+              <label>Distancia real (km)<input [(ngModel)]="actualDistanceKm" name="actualDistanceKm" type="number" min="0.1" step="0.1"></label>
+              <label>Duración real (min)<input [(ngModel)]="actualDurationMin" name="actualDurationMin" type="number" min="1" step="1"></label>
+            </div>
+            <button class="primary-button" type="button" (click)="completeTrip()" [disabled]="busy">Finalizar y liquidar</button>
+          }
+        </article>
+      } @else if (!available) {
+        <p class="empty-state">Conéctate para consultar solicitudes. Solo los conductores aprobados pueden ponerse en línea.</p>
+      } @else if (requests.length) {
+        <div class="request-list">
+          @for (request of requests; track request.id) {
+            <article class="request-card">
+              <div class="request-card-heading">
+                <span class="status-pill">Solicitud #{{ request.id }}</span>
+                <strong>{{ request.estimated_fare | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</strong>
+              </div>
+              <p><b>Recoger:</b> {{ request.origin_name }}</p>
+              <p><b>Destino:</b> {{ request.destination_name }}</p>
+              <p class="request-meta">{{ request.estimated_distance_km }} km · {{ request.estimated_duration_min }} min · Cliente: {{ request.client.name }}</p>
+              <button class="primary-button" type="button" (click)="acceptRequest(request)" [disabled]="busy">Aceptar servicio</button>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-state">Aún no hay solicitudes pendientes. La lista se actualiza automáticamente.</p>
+      }
+      @if (available && lastRequestsUpdatedAt) {
+        <p class="polling-note" role="status">Última actualización {{ lastRequestsUpdatedAt | date:'HH:mm:ss' }} · búsqueda cada 3 s</p>
+      }
+    </section>
+  </div>
+  <p class="tracking-note">La ubicación solo se comparte con la API mientras estás conectado. Se detiene al desconectarte o salir de esta pantalla.</p>
+</main>
